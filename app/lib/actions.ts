@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { sql } from '@vercel/postgres'
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { signIn } from '@/auth';
 
 // This is temporary until @types/react-dom is updated
 export type State = {
@@ -39,8 +40,6 @@ export async function createInvoice(prevState: State, formData: FormData) {
   });
 
   if (!validatedFields.success) {
-    console.log(validatedFields.error.flatten().fieldErrors);
-    
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Create Invoice.',
@@ -118,4 +117,15 @@ export async function createInvoice(prevState: State, formData: FormData) {
     
     
     revalidatePath('/dashboard/invoices');
+  }
+
+  export async function authenticate(prevState: string | undefined, formData: FormData) {
+    try {
+      await signIn('credentials', Object.fromEntries(formData))
+    } catch (error) {
+      if ((error as Error).message.includes('CredentialsSignin')) {
+        return 'CredentialSignin'
+      }
+      throw error
+    }
   }
